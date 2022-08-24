@@ -1,13 +1,39 @@
 #include <iostream>
 #include <string>
+#include <cstdlib>
 #include <WS2tcpip.h>
 #pragma comment (lib, "ws2_32.lib")
 
-
 using namespace std;
 
-int main(int argc, char **argv)
-{
+void sendMsg(SOCKET clientSocket){
+	
+	char buf[4096];
+	
+	while (true)
+	{
+		int random = rand() % 40 + 0;
+		strcpy(buf, to_string(random).c_str());
+
+		int bytesSend = send(clientSocket, buf, 3, 0);
+		cout<< string(buf, 0, bytesSend) << " was sent to client" << endl;
+		if (bytesSend == SOCKET_ERROR)
+		{
+			cerr << "Error in send(). Quitting" << endl;
+			break;
+		}
+
+		if (bytesSend == 0)
+		{
+			cout << "Client disconnected " << endl;
+			break;
+		}
+
+		Sleep(1000);
+	}
+}
+
+void connectionServer(){
 	WSADATA wsData;
 	WORD ver = MAKEWORD(2, 2);
 
@@ -15,14 +41,14 @@ int main(int argc, char **argv)
 	if (wsOk != 0)
 	{
 		cerr << "Can't Initialize winsock! Quitting" << endl;
-		return 0;
+		return;
 	}
 	
 	SOCKET listening = socket(AF_INET, SOCK_STREAM, 0);
 	if (listening == INVALID_SOCKET)
 	{
 		cerr << "Can't create a socket! Quitting" << endl;
-		return 0;
+		return;
 	}
 
 	sockaddr_in hint;
@@ -58,30 +84,15 @@ int main(int argc, char **argv)
 
 	closesocket(listening);
 
-	char buf[4096] = "13";
-	
-	while (true)
-	{
-		int bytesSend = send(clientSocket, buf, 3, 0);
-		cout<< string(buf, 0, bytesSend) << " was sent to client" << endl;
-		if (bytesSend == SOCKET_ERROR)
-		{
-			cerr << "Error in send(). Quitting" << endl;
-			break;
-		}
+	sendMsg(clientSocket);
 
-		if (bytesSend == 0)
-		{
-			cout << "Client disconnected " << endl;
-			break;
-		}
-
-		Sleep(2000);
-	} 
-	
 	closesocket(clientSocket);
 	WSACleanup();	
 	system("pause");
-	
+}
+
+int main(int argc, char **argv)
+{
+	connectionServer();
 	return 0;
 }

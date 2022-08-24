@@ -1,12 +1,41 @@
 #include <iostream>
 #include <string>
 #include <WS2tcpip.h>
+#include <thread>
+#include <chrono>
+#include <iomanip>
 #pragma comment(lib, "libws2_32")
 
 using namespace std;
 
-int main()
-{
+void readTemp(SOCKET sock){
+
+	chrono::steady_clock sc;
+	auto start = sc.now();
+
+	char buf[4096];
+	string recievedmsg;
+	int sum = 0;
+	int count = 0;
+
+	while(true){
+		int result = recv(sock, buf, 3, 0);
+		cout<< "SERVER : " << buf << endl;
+
+		int temp = atoi(buf);
+		sum += temp;
+		count += 5;
+		auto end = sc.now();
+		auto time_span = static_cast<chrono::duration<double>>(end-start);
+		Sleep(5000);
+		cout<< "time : " << std:: setprecision(2) << time_span.count()<<endl;
+		cout<<"Accumlation : " << sum / time_span.count() << endl;
+		cout<<"Average : " << sum / time_span.count() << endl;
+
+	}
+}
+
+void connectionClient(){
 	string ipAddress = "127.0.0.1";			
 	int port = 808;						
 
@@ -16,7 +45,7 @@ int main()
 	if (wsResult != 0)
 	{
 		cerr << "Can't start Winsock, Err #" << wsResult << endl;
-		return 0;
+		return;
 	}
 
 	SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -24,7 +53,7 @@ int main()
 	{
 		cerr << "Can't create socket, Err #" << WSAGetLastError() << endl;
 		WSACleanup();
-		return 0;
+		return;
 	}
 
 	sockaddr_in hint;
@@ -38,18 +67,14 @@ int main()
 		cerr << "Can't connect to server, Err #" << WSAGetLastError() << endl;
 		closesocket(sock);
 		WSACleanup();
-		return 0;
+		return;
 	}
 
-	char buf[4096];
-	string recievedmsg;
-
-	while(true){
-		int result = recv(sock, buf, 3, 0);
-		cout<< "SERVER > " << buf << endl;
-		Sleep(2000);
-	}
-
+	readTemp(sock);
 	closesocket(sock);
 	WSACleanup();
+}
+int main()
+{
+	connectionClient();
 }
