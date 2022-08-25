@@ -24,7 +24,7 @@ void readTemp(SOCKET sock){
 
 		int temp = atoi(buf);
 		sum += temp;
-		count += 5;
+		//count += 5;
 		auto end = sc.now();
 		auto time_span = static_cast<chrono::duration<double>>(end-start);
 		Sleep(5000);
